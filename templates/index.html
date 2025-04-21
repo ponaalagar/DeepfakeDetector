@@ -1,49 +1,127 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
     <title>Deepfake Detector</title>
     <style>
-        body { font-family: sans-serif; margin: 20px; background-color: #f4f4f4; }
-        .container { max-width: 600px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        h1, h2 { text-align: center; color: #333; }
-        form { margin-top: 20px; display: flex; flex-direction: column; align-items: center; }
-        input[type=file] { margin-bottom: 15px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
-        input[type=submit] { background-color: #5cb85c; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
-        input[type=submit]:hover { background-color: #4cae4c; }
-        .result { margin-top: 30px; padding: 15px; border-radius: 4px; text-align: center; font-size: 1.2em; font-weight: bold; }
-        .real { background-color: #dff0d8; color: #3c763d; border: 1px solid #d6e9c6;}
-        .fake { background-color: #f2dede; color: #a94442; border: 1px solid #ebccd1;}
-        .error { background-color: #f2dede; color: #a94442; border: 1px solid #ebccd1; padding: 10px; border-radius: 4px; text-align: center;}
-        .probability { font-size: 0.9em; color: #555; font-weight: normal; margin-top: 5px;}
+      body {
+        font-family: sans-serif;
+        margin: 20px;
+        background-color: #f4f4f4;
+      }
+      .container {
+        max-width: 600px;
+        margin: auto;
+        background: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+      h1,
+      h2 {
+        text-align: center;
+        color: #333;
+      }
+      form {
+        margin-top: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      input[type="file"] {
+        margin-bottom: 15px;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+      input[type="submit"] {
+        background-color: #5cb85c;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+      input[type="submit"]:hover {
+        background-color: #4cae4c;
+      }
+      .result {
+        margin-top: 30px;
+        padding: 15px;
+        border-radius: 4px;
+        text-align: center;
+        font-size: 1.2em;
+        font-weight: bold;
+      }
+      .real {
+        background-color: #dff0d8;
+        color: #3c763d;
+        border: 1px solid #d6e9c6;
+      }
+      .fake {
+        background-color: #f2dede;
+        color: #a94442;
+        border: 1px solid #ebccd1;
+      }
+      .error {
+        background-color: #f2dede;
+        color: #a94442;
+        border: 1px solid #ebccd1;
+        padding: 10px;
+        border-radius: 4px;
+        text-align: center;
+      }
+      .probability {
+        font-size: 0.9em;
+        color: #555;
+        font-weight: normal;
+        margin-top: 5px;
+      }
+      .image-preview {
+        text-align: center;
+        margin-top: 20px;
+      }
+      .image-preview img {
+        max-width: 100%;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <h1>Deepfake Image Detector</h1>
-        <form method="post" action="/predict" enctype="multipart/form-data">
-            <input type="file" name="file" accept="image/png, image/jpeg, image/jpg" required>
-            <input type="submit" value="Predict">
-        </form>
+      <h1>Deepfake Image Detector</h1>
+      <form method="post" action="/predict" enctype="multipart/form-data">
+        <input
+          type="file"
+          name="file"
+          accept="image/png, image/jpeg, image/jpg"
+          required
+        />
+        <input type="submit" value="Predict" />
+      </form>
 
-        {% if error %}
-            <div class="error">
-                Error: {{ error }}
-            </div>
+      {% if error %}
+      <div class="error">Error: {{ error }}</div>
+      {% endif %} {% if prediction_text %}
+      <div class="result {{ 'real' if prediction_text == 'Real' else 'fake' }}">
+        Prediction: {{ prediction_text }} {% if probability is not none %}
+        <div class="probability">
+          (Confidence Score for Real: {{ "%.2f"|format(probability * 100) }}%)
+        </div>
         {% endif %}
-
-        {% if prediction_text %}
-            <div class="result {{ 'real' if prediction_text == 'Real' else 'fake' }}">
-                Prediction: {{ prediction_text }}
-                {% if probability is not none %}
-                    <div class="probability">
-                        (Confidence Score for Real: {{ "%.2f"|format(probability * 100) }}%)
-                        <!-- You could add more logic here based on probability -->
-                    </div>
-                {% endif %}
-            </div>
-        {% endif %}
+      </div>
+      {% endif %} {% if image_path %}
+      <div class="image-preview">
+        <h2>Uploaded Image:</h2>
+        <img src="{{ image_path }}" alt="Uploaded Image" />
+      </div>
+      {% endif %}
     </div>
-</body>
+  </body>
 </html>
