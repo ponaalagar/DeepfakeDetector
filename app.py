@@ -140,10 +140,21 @@ def feedback():
         flash('Invalid feedback submission.', 'error')
         return redirect(url_for('index'))
 
-    current_folder = REAL_FOLDER if os.path.exists(os.path.join(REAL_FOLDER, filename)) else FAKE_FOLDER
-    target_folder = FAKE_FOLDER if current_folder == REAL_FOLDER else REAL_FOLDER
+    # Check current location of file
+    current_data_folder = DATA_REAL_FOLDER if os.path.exists(os.path.join(DATA_REAL_FOLDER, filename)) else DATA_FAKE_FOLDER
+    current_static_folder = STATIC_REAL_FOLDER if os.path.exists(os.path.join(STATIC_REAL_FOLDER, filename)) else STATIC_FAKE_FOLDER
+
+    # Determine target folders
+    target_data_folder = DATA_FAKE_FOLDER if current_data_folder == DATA_REAL_FOLDER else DATA_REAL_FOLDER
+    target_static_folder = STATIC_FAKE_FOLDER if current_static_folder == STATIC_REAL_FOLDER else STATIC_REAL_FOLDER
+
     try:
-        os.rename(os.path.join(current_folder, filename), os.path.join(target_folder, filename))
+        # Move files in both directories
+        os.rename(os.path.join(current_data_folder, filename), 
+                 os.path.join(target_data_folder, filename))
+        os.rename(os.path.join(current_static_folder, filename), 
+                 os.path.join(target_static_folder, filename))
+        
         flash('Feedback recorded. Image moved to the correct folder.', 'success')
     except Exception as e:
         print(f"Error handling feedback: {e}")
