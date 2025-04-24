@@ -5,6 +5,7 @@ from flask import Flask, request, render_template, redirect, url_for, flash
 from PIL import Image
 import io
 from werkzeug.utils import secure_filename
+import uuid
 
 # --- Configuration ---
 MODEL_PATH = "models/cnn_model_tf.h5"
@@ -13,13 +14,22 @@ ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 IMAGE_WIDTH = 128
 IMAGE_HEIGHT = 128
 
+# Update the directories
+DATA_REAL_FOLDER = 'data/real'
+DATA_FAKE_FOLDER = 'data/fake'
+STATIC_REAL_FOLDER = 'static/real'
+STATIC_FAKE_FOLDER = 'static/fake'
+
+# Ensure all directories exist
+os.makedirs(DATA_REAL_FOLDER, exist_ok=True)
+os.makedirs(DATA_FAKE_FOLDER, exist_ok=True)
+os.makedirs(STATIC_REAL_FOLDER, exist_ok=True)
+os.makedirs(STATIC_FAKE_FOLDER, exist_ok=True)
+
 # --- Flask App Setup ---
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
-
-# Ensure upload folder exists
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # --- Load Model ---
 try:
@@ -50,7 +60,7 @@ def preprocess_image(image_stream):
 # --- Routes ---
 @app.route('/', methods=['GET'])
 def index():
-    return render_template('index.html')
+    return render_template('index.html', prediction_text=None, probability=None, image_path=None, filename=None)
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -69,15 +79,20 @@ def predict():
         return redirect(url_for('index'))
 
     if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
+        # Generate unique filename
+        ext = file.filename.rsplit('.', 1)[1].lower()
+        unique_filename = f"{uuid.uuid4().hex}.{ext}"
+        
+        # Save to uploads temporarily
+        temp_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+        file.save(temp_path)
 
-        with open(filepath, 'rb') as f:
+        with open(temp_path, 'rb') as f:
             preprocessed_img = preprocess_image(f)
 
         if preprocessed_img is None:
             flash('Could not process image file.', 'error')
+            os.remove(temp_path)  # Clean up
             return redirect(url_for('index'))
 
         try:
@@ -85,18 +100,60 @@ def predict():
             prediction_text = "Real" if prediction_prob > 0.5 else "Fake"
             probability = float(prediction_prob)
 
+            # Determine target directories
+            data_target_folder = DATA_REAL_FOLDER if prediction_text == "Real" else DATA_FAKE_FOLDER
+            static_target_folder = STATIC_REAL_FOLDER if prediction_text == "Real" else STATIC_FAKE_FOLDER
+
+            # Copy to both data and static directories
+            import shutil
+            data_final_path = os.path.join(data_target_folder, unique_filename)
+            static_final_path = os.path.join(static_target_folder, unique_filename)
+            
+            shutil.copy2(temp_path, data_final_path)  # Copy to data directory
+            os.rename(temp_path, static_final_path)    # Move to static directory
+
+            # Create URL for template
+            image_url = f"/static/{'real' if prediction_text == 'Real' else 'fake'}/{unique_filename}"
+            
             return render_template('index.html',
-                                   prediction_text=prediction_text,
-                                   probability=probability,
-                                   image_path=filepath)
+                               prediction_text=prediction_text,
+                               probability=probability,
+                               image_path=image_url,
+                               filename=unique_filename)
         except Exception as e:
             print(f"Error during prediction: {e}")
             flash("An error occurred during prediction.", "error")
+            if os.path.exists(temp_path):
+                os.remove(temp_path)  # Clean up
             return redirect(url_for('index'))
 
     else:
         flash('Invalid file type. Allowed types: png, jpg, jpeg', 'error')
         return redirect(url_for('index'))
+
+@app.route('/feedback', methods=['POST'])
+def feedback():
+    filename = request.form.get('filename')
+    correct = request.form.get('correct')
+
+    if not filename or not correct:
+        flash('Invalid feedback submission.', 'error')
+        return redirect(url_for('index'))
+
+    current_folder = REAL_FOLDER if os.path.exists(os.path.join(REAL_FOLDER, filename)) else FAKE_FOLDER
+    target_folder = FAKE_FOLDER if current_folder == REAL_FOLDER else REAL_FOLDER
+    try:
+        os.rename(os.path.join(current_folder, filename), os.path.join(target_folder, filename))
+        flash('Feedback recorded. Image moved to the correct folder.', 'success')
+    except Exception as e:
+        print(f"Error handling feedback: {e}")
+        flash('An error occurred while processing feedback.', 'error')
+
+    return redirect(url_for('index'))
+
+# --- WSGI Entry Point ---
+# This ensures the app can be served by a WSGI server like gunicorn or uWSGI.
+application = app
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)

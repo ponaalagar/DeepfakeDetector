@@ -1,127 +1,188 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, shrink-to-fit=no"
-    />
-    <title>Deepfake Detector</title>
-    <style>
-      body {
-        font-family: sans-serif;
-        margin: 20px;
-        background-color: #f4f4f4;
-      }
-      .container {
-        max-width: 600px;
-        margin: auto;
-        background: #fff;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-      }
-      h1,
-      h2 {
-        text-align: center;
-        color: #333;
-      }
-      form {
-        margin-top: 20px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-      }
-      input[type="file"] {
-        margin-bottom: 15px;
-        padding: 10px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-      }
-      input[type="submit"] {
-        background-color: #5cb85c;
-        color: white;
-        padding: 10px 20px;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 16px;
-      }
-      input[type="submit"]:hover {
-        background-color: #4cae4c;
-      }
-      .result {
-        margin-top: 30px;
-        padding: 15px;
-        border-radius: 4px;
-        text-align: center;
-        font-size: 1.2em;
-        font-weight: bold;
-      }
-      .real {
-        background-color: #dff0d8;
-        color: #3c763d;
-        border: 1px solid #d6e9c6;
-      }
-      .fake {
-        background-color: #f2dede;
-        color: #a94442;
-        border: 1px solid #ebccd1;
-      }
-      .error {
-        background-color: #f2dede;
-        color: #a94442;
-        border: 1px solid #ebccd1;
-        padding: 10px;
-        border-radius: 4px;
-        text-align: center;
-      }
-      .probability {
-        font-size: 0.9em;
-        color: #555;
-        font-weight: normal;
-        margin-top: 5px;
-      }
-      .image-preview {
-        text-align: center;
-        margin-top: 20px;
-      }
-      .image-preview img {
-        max-width: 100%;
-        border-radius: 8px;
-        border: 1px solid #ccc;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <h1>Deepfake Image Detector</h1>
-      <form method="post" action="/predict" enctype="multipart/form-data">
-        <input
-          type="file"
-          name="file"
-          accept="image/png, image/jpeg, image/jpg"
-          required
-        />
-        <input type="submit" value="Predict" />
-      </form>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  <title>Deepfake Detector</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Roboto', Arial, sans-serif;
+      margin: 0;
+      background: linear-gradient(120deg, #232526 0%, #8a2be2 100%);
+      color: #f3f3f3;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 480px;
+      margin: 40px auto;
+      background: #181824ee;
+      padding: 32px 28px 24px 28px;
+      border-radius: 18px;
+      box-shadow: 0 8px 32px 0 rgba(138,43,226,0.25);
+    }
+    h1 {
+      text-align: center;
+      color: #b983ff;
+      margin-bottom: 18px;
+      font-size: 2.1em;
+      letter-spacing: 1px;
+    }
+    form {
+      margin-top: 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    input[type="file"] {
+      margin-bottom: 18px;
+      padding: 10px;
+      border: 1px solid #b983ff;
+      border-radius: 6px;
+      background-color: #232526;
+      color: #f3f3f3;
+      width: 100%;
+    }
+    input[type="submit"] {
+      background: linear-gradient(90deg, #8a2be2 60%, #b983ff 100%);
+      color: white;
+      padding: 10px 28px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1.1em;
+      font-weight: 700;
+      margin-bottom: 8px;
+      transition: background 0.2s;
+    }
+    input[type="submit"]:hover {
+      background: linear-gradient(90deg, #b983ff 0%, #8a2be2 100%);
+    }
+    .result {
+      margin-top: 28px;
+      padding: 16px 10px;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 1.15em;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+    }
+    .real {
+      background: rgba(0, 255, 120, 0.13);
+      color: #00ff99;
+      border: 1.5px solid #00ff99;
+    }
+    .fake {
+      background: rgba(255, 0, 80, 0.13);
+      color: #ff4b7d;
+      border: 1.5px solid #ff4b7d;
+    }
+    .error {
+      background: #ffdde4;
+      color: #b30021;
+      border: 1.5px solid #ff4b7d;
+      padding: 10px;
+      border-radius: 6px;
+      text-align: center;
+      margin-top: 18px;
+    }
+    .probability {
+      font-size: 0.98em;
+      color: #b983ff;
+      font-weight: normal;
+      margin-top: 7px;
+    }
+    .confidence-scale {
+      width: 28px;
+      height: 160px;
+      background: linear-gradient(to top, #ff4b7d, #00ff99);
+      border-radius: 8px;
+      margin: 18px auto 0 auto;
+      position: relative;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      box-shadow: 0 2px 8px #0002;
+    }
+    .confidence-indicator {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background-color: #b983ff;
+      border-radius: 2px;
+      top: calc(100% - {{ (probability or 0) * 100 }}%);
+      box-shadow: 0 0 8px #b983ff88;
+      transition: top 0.5s;
+    }
+    .feedback-form {
+      margin-top: 18px;
+      text-align: center;
+    }
+    .feedback-form label {
+      margin-right: 10px;
+      font-size: 1em;
+      color: #b983ff;
+    }
+    .feedback-form input[type="radio"] {
+      margin: 0 4px 0 12px;
+    }
+    .image-preview {
+      text-align: center;
+      margin-top: 24px;
+      position: relative;
+    }
+    .image-preview img {
+      max-width: 100%;
+      max-height: 260px;
+      border-radius: 10px;
+      border: 2px solid #b983ff;
+      box-shadow: 0 2px 12px #0003;
+      background: #232526;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Deepfake Image Detector</h1>
+    <form method="post" action="/predict" enctype="multipart/form-data">
+      <input type="file" name="file" accept="image/png, image/jpeg, image/jpg" required />
+      <input type="submit" value="Predict" />
+    </form>
 
-      {% if error %}
+    {% if error %}
       <div class="error">Error: {{ error }}</div>
-      {% endif %} {% if prediction_text %}
+    {% endif %}
+
+    {% if prediction_text %}
       <div class="result {{ 'real' if prediction_text == 'Real' else 'fake' }}">
-        Prediction: {{ prediction_text }} {% if probability is not none %}
-        <div class="probability">
-          (Confidence Score for Real: {{ "%.2f"|format(probability * 100) }}%)
-        </div>
+        Prediction: {{ prediction_text }}
+        {% if probability is not none %}
+          <div class="probability">
+            (Confidence Score for Real: {{ "%.2f"|format(probability * 100) }}%)
+          </div>
+          <div class="confidence-scale">
+            <div class="confidence-indicator"></div>
+          </div>
         {% endif %}
       </div>
-      {% endif %} {% if image_path %}
+      <div class="feedback-form">
+        <form method="post" action="/feedback">
+          <label>Was the prediction correct?</label>
+          <input type="hidden" name="filename" value="{{ filename }}">
+          <input type="radio" name="correct" value="yes" required> Yes
+          <input type="radio" name="correct" value="no" required> No
+          <input type="submit" value="Submit Feedback">
+        </form>
+      </div>
+    {% endif %}
+
+    {% if image_path %}
       <div class="image-preview">
         <h2>Uploaded Image:</h2>
         <img src="{{ image_path }}" alt="Uploaded Image" />
       </div>
-      {% endif %}
-    </div>
-  </body>
+    {% endif %}
+  </div>
+</body>
 </html>
