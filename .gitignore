@@ -1,3 +1,6 @@
 images
 __pycache__
 static 
+.python-version
+venv
+
