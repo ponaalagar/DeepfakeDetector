@@ -162,9 +162,24 @@ def feedback():
 
     return redirect(url_for('index'))
 
+# --- Production Configuration ---
+# Disable debug mode for production
+DEBUG_MODE = False
+
+# Configure logging for production
+import logging
+from logging.handlers import RotatingFileHandler
+
+if not DEBUG_MODE:
+    # Set up logging to a file
+    log_handler = RotatingFileHandler('app.log', maxBytes=100000, backupCount=3)
+    log_handler.setLevel(logging.INFO)
+    app.logger.addHandler(log_handler)
+
 # --- WSGI Entry Point ---
-# This ensures the app can be served by a WSGI server like gunicorn or uWSGI.
+# This ensures the app can be served by a WSGI server like Gunicorn or uWSGI.
 application = app
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # For local development only; use Gunicorn in production
+    app.run(debug=DEBUG_MODE, host='0.0.0.0', port=5000)
